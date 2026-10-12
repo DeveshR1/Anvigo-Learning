@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login | Anvigo Learning</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/png" href="../images/favicon.png">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="login-card">
+      <img src="../images/logo.png" alt="Anvigo Learning">
+      <h1>Admin Panel Login</h1>
+      <div class="sub">Website content manage karne ke liye login karein</div>
+      <form id="login-form">
+        <div><label id="login-user-label">Username</label><input type="text" id="login-user" placeholder="Enter username" required></div>
+        <div><label>Password</label><input type="password" id="login-pass" placeholder="Enter password" required></div>
+        <button class="btn btn-primary" type="submit" style="padding:12px">🔐 Login to Dashboard</button>
+        <div id="login-err" style="color:#b91c1c;font-size:0.8rem;display:none">Invalid username or password!</div>
+      </form>
+      <div style="margin-top:14px"><a href="../index.html" style="font-size:0.8rem;color:var(--primary)">← Back to Website</a></div>
+    </div>
+  </div>
+  <script src="../js/data.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="../js/supabase-config.js"></script>
+  <script src="../js/supabase-client.js"></script>
+  <script>
+    const userLabel = document.getElementById('login-user-label');
+    const userInput = document.getElementById('login-user');
+
+    const isCloudMode = (typeof vhtIsSupabaseConfigured === 'function' && vhtIsSupabaseConfigured());
+
+    if (isCloudMode) {
+      userLabel.textContent = 'Admin Email';
+      userInput.type = 'email';
+      userInput.placeholder = 'anvigolearning@gmail.com';
+      userInput.value = 'anvigolearning@gmail.com';
+    } else {
+      userLabel.textContent = 'Username';
+      userInput.type = 'text';
+      userInput.placeholder = 'admin';
+      userInput.value = 'admin';
+    }
+
+    document.getElementById('login-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      const errEl = document.getElementById('login-err');
+      errEl.style.display = 'none';
+      const u = userInput.value.trim();
+      const p = document.getElementById('login-pass').value;
+      const btn = e.target.querySelector('button[type=submit]');
+
+      if (isCloudMode && typeof vhtSupabaseLogin === 'function') {
+        btn.disabled = true; btn.textContent = 'Verifying with Supabase...';
+        const res = await vhtSupabaseLogin(u, p);
+        if (res && res.data && res.data.session) {
+          sessionStorage.setItem(VHT_ADMIN_KEY, '1');
+          sessionStorage.setItem('vht_admin_auth_type', 'supabase');
+          location.href = 'dashboard.html';
+        } else {
+          btn.disabled = false; btn.textContent = '🔐 Login to Dashboard';
+          errEl.textContent = (res && res.error && res.error.message) ? res.error.message : 'Invalid email or password in Supabase!';
+          errEl.style.display = 'block';
+        }
+      } else {
+        const d = vhtLoad();
+        if (u === d.admin.username && p === d.admin.password) {
+          sessionStorage.setItem(VHT_ADMIN_KEY, '1');
+          sessionStorage.setItem('vht_admin_auth_type', 'local');
+          location.href = 'dashboard.html';
+        } else {
+          errEl.textContent = 'Invalid username or password!';
+          errEl.style.display = 'block';
+        }
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="320" viewBox="0 0 480 320">
+  <rect width="480" height="320" fill="#eff6ff"/>
+  <g>
+    <circle cx="160" cy="120" r="34" fill="#f59e0b"/>
+    <circle cx="160" cy="108" r="18" fill="#7c2d12"/>
+    <rect x="126" y="154" width="68" height="90" rx="20" fill="#1d7fbf"/>
+  </g>
+  <g>
+    <circle cx="300" cy="150" r="26" fill="#fbbf24"/>
+    <rect x="272" y="176" width="56" height="70" rx="16" fill="#8b5cf6"/>
+  </g>
+  <rect x="240" y="250" width="160" height="14" rx="7" fill="#b45309"/>
+  <rect x="255" y="225" width="60" height="25" rx="4" fill="#fff" stroke="#94a3b8"/>
+  <text x="240" y="300" text-anchor="middle" font-family="Poppins, Arial" font-size="18" fill="#334155" font-weight="600">One-to-One Home Tuition</text>
+</svg>

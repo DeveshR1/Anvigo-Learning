@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard | Anvigo Learning</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/png" href="../images/favicon.png">
+  <link rel="stylesheet" href="../css/admin.css">
+  <style>html:not(.auth-ok) body { visibility: hidden; }</style>
+  <script src="../js/data.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="../js/supabase-config.js"></script>
+  <script src="../js/supabase-client.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script>
+    /* Auth guard — runs before dashboard is visible */
+    if (!sessionStorage.getItem(VHT_ADMIN_KEY)) {
+      location.href = 'index.html';
+    } else {
+      document.documentElement.classList.add('auth-ok');
+    }
+  </script>
+</head>
+<body data-page="admin">
+  <div class="sidebar-backdrop" id="sidebar-backdrop" onclick="document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-backdrop').classList.remove('show');"></div>
+  <div class="admin-layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <img src="../images/logo.png" alt="Logo">
+        <button class="sidebar-close-btn" id="sidebar-close-btn" aria-label="Close Sidebar" onclick="document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-backdrop').classList.remove('show');">&times;</button>
+      </div>
+      <nav id="admin-nav">
+        <a href="#dashboard" data-view="dashboard" class="active">📊 Dashboard</a>
+        <a href="#enquiries" data-view="enquiries">📩 Enquiries</a>
+        <a href="#teacherApps" data-view="teacherApps">🧑‍💼 Teacher Applications</a>
+        <a href="#schoolApps" data-view="schoolApps">🏫 School Requests</a>
+        <a href="#teachers" data-view="teachers">👩‍🏫 Teachers</a>
+        <a href="#toppers" data-view="toppers">🏆 Toppers</a>
+        <a href="#testimonials" data-view="testimonials">💬 Testimonials</a>
+        <a href="#blogs" data-view="blogs">📝 Blog Articles</a>
+        <a href="#gallery" data-view="gallery">🖼️ Gallery</a>
+        <a href="#banners" data-view="banners">🎯 Banners</a>
+        <a href="#settings" data-view="settings">⚙️ Settings</a>
+      </nav>
+      <div class="logout">
+        <a href="../index.html">🌐 View Website</a>
+        <a href="#" id="logout-btn">🚪 Logout</a>
+      </div>
+    </aside>
+
+    <main class="admin-main">
+      <div class="admin-topbar">
+        <div style="display:flex;align-items:center;gap:12px">
+          <button class="hamburger-admin" aria-label="Toggle Sidebar Menu" onclick="document.getElementById('sidebar').classList.toggle('open'); document.getElementById('sidebar-backdrop').classList.toggle('show');">☰</button>
+          <h1 id="view-title">Dashboard</h1>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-green" onclick="exportMasterWorkbookXLSX()" title="Export all 3 categories into 1 Excel workbook with 3 separate tabs">📊 Export All (3 Excel Sheets)</button>
+          <div class="actions" id="view-actions"></div>
+        </div>
+      </div>
+
+      <!-- Dashboard -->
+      <div class="section-view active" id="view-dashboard">
+        <div id="cloud-status-banner" style="background:#eff6ff;border:1px solid #3b82f6;color:#1e40af;padding:12px 18px;border-radius:10px;margin-bottom:18px;font-size:0.87rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+          <div>
+            <span id="cloud-status-indicator">⚡ <b>Supabase Cloud:</b> Checking...</span>
+            <span id="cloud-status-sub" style="display:block;font-size:0.78rem;color:#475569;margin-top:2px">Real-time PostgreSQL database, storage &amp; admin auth</span>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-sm btn-primary" onclick="showView('settings')">⚙️ Configure Supabase</button>
+            <button class="btn btn-sm btn-green" onclick="exportMasterWorkbookXLSX()">⬇️ Master Excel (3 Tabs)</button>
+          </div>
+        </div>
+        <div class="stats-grid" id="stats-grid"></div>
+        <div class="panel">
+          <h2>📩 Latest Enquiries</h2>
+          <div class="table-scroll" id="recent-enquiries"></div>
+        </div>
+        <div class="panel">
+          <h2>🧑‍💼 Latest Teacher Applications</h2>
+          <div class="table-scroll" id="recent-teacher-apps"></div>
+        </div>
+        <div class="panel">
+          <h2>🏫 Latest School Requests</h2>
+          <div class="table-scroll" id="recent-school-apps"></div>
+        </div>
+        <div class="panel">
+          <h2>📈 Most Requested (from enquiries)</h2>
+          <div id="popular-stats" style="display:flex;gap:30px;flex-wrap:wrap"></div>
+        </div>
+      </div>
+
+      <!-- Enquiries -->
+      <div class="section-view" id="view-enquiries">
+        <div class="panel">
+          <div class="table-scroll" id="enquiries-table"></div>
+        </div>
+      </div>
+
+      <!-- Teacher Applications -->
+      <div class="section-view" id="view-teacherApps">
+        <div class="panel">
+          <div class="table-scroll" id="teacher-apps-table"></div>
+        </div>
+      </div>
+
+      <!-- School Requests -->
+      <div class="section-view" id="view-schoolApps">
+        <div class="panel">
+          <div class="table-scroll" id="school-apps-table"></div>
+        </div>
+      </div>
+
+      <!-- Teachers -->
+      <div class="section-view" id="view-teachers">
+        <div class="panel"><div class="table-scroll" id="teachers-table"></div></div>
+      </div>
+
+      <!-- Toppers -->
+      <div class="section-view" id="view-toppers">
+        <div class="panel"><div class="table-scroll" id="toppers-table"></div></div>
+      </div>
+
+      <!-- Testimonials -->
+      <div class="section-view" id="view-testimonials">
+        <div class="panel"><div class="table-scroll" id="testimonials-table"></div></div>
+      </div>
+
+      <!-- Blogs -->
+      <div class="section-view" id="view-blogs">
+        <div class="panel"><div class="table-scroll" id="blogs-table"></div></div>
+      </div>
+
+      <!-- Gallery -->
+      <div class="section-view" id="view-gallery">
+        <div class="panel"><div class="table-scroll" id="gallery-table"></div></div>
+      </div>
+
+      <!-- Banners -->
+      <div class="section-view" id="view-banners">
+        <div class="panel"><div class="table-scroll" id="banners-table"></div></div>
+      </div>
+
+      <!-- Settings -->
+      <div class="section-view" id="view-settings">
+        <div class="panel">
+          <h2>🏢 Business Information</h2>
+          <form id="settings-form" class="form-grid">
+            <div><label>Institute Name</label><input name="siteName"></div>
+            <div><label>Tagline</label><input name="tagline"></div>
+            <div><label>Phone Number</label><input name="phone"></div>
+            <div><label>WhatsApp Number (with country code, no +)</label><input name="whatsapp" placeholder="919876543210"></div>
+            <div><label>Public Email</label><input name="email"></div>
+            <div><label>Enquiry Email (enquiries yaha aayengi)</label><input name="enquiryEmail"></div>
+            <div class="full"><label>Office Address</label><input name="address"></div>
+            <div><label>Google Maps Link</label><input name="mapLink"></div>
+            <div><label>Working Hours</label><input name="hours"></div>
+            <div><label>Facebook Link</label><input name="facebook"></div>
+            <div><label>Instagram Link</label><input name="instagram"></div>
+            <div><label>YouTube Link</label><input name="youtube"></div>
+            <div><label>Hero Title (SEO)</label><input name="heroTitle"></div>
+            <div class="full"><label>Hero Subtitle</label><input name="heroSubtitle"></div>
+            <div class="full"><label>About Us Content</label><textarea name="about"></textarea></div>
+            <div class="full"><button class="btn btn-primary" type="submit">💾 Save Settings</button></div>
+          </form>
+        </div>
+        <div class="panel" id="supabase-settings-panel">
+          <h2>⚡ Supabase Cloud Setup (Database, Storage &amp; Auth)</h2>
+          <p style="font-size:0.82rem;color:var(--gray);margin-bottom:12px">
+            Connect your free <b>https://supabase.com</b> project to store student enrollments, teacher applications,
+            school requests, and uploaded files in a persistent cloud database. See <code>SUPABASE-SETUP-GUIDE.md</code> for the 1-click SQL setup file (<code>supabase/schema.sql</code>).
+          </p>
+          <div id="supabase-badge" style="padding:10px 14px;border-radius:8px;font-size:0.83rem;margin-bottom:14px;background:#fef3c7;border:1px solid #f59e0b;color:#92400e">
+            Checking Supabase status...
+          </div>
+          <form id="supabase-settings-form" class="form-grid">
+            <div class="full">
+              <label>Supabase Project URL</label>
+              <input name="supabaseUrl" id="setting-supabase-url" placeholder="https://xxxxxxxxxxxxxxxx.supabase.co" required>
+            </div>
+            <div class="full">
+              <label>Supabase Anon Public Key (anon key)</label>
+              <input name="supabaseAnonKey" id="setting-supabase-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." required>
+            </div>
+            <div class="full" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <button class="btn btn-primary" type="submit">💾 Save &amp; Connect to Supabase</button>
+              <button class="btn btn-light" type="button" id="btn-disconnect-supabase" style="display:none">Disconnect Cloud</button>
+            </div>
+          </form>
+        </div>
+        <div class="panel">
+          <h2>📊 Auto-Excel Setup (Google Sheets — Free)</h2>
+          <p style="font-size:0.82rem;color:var(--gray);margin-bottom:12px">
+            Paste your Google Apps Script Web App URL here to make every form submission (Student / Teacher / School)
+            save automatically as a new row in your Google Sheet — which you can open or download as an Excel file
+            anytime. See <code>google-sheets-setup/README.md</code> in the project folder for the free, one-time setup steps.
+          </p>
+          <form id="sheet-settings-form" class="form-grid">
+            <div class="full"><label>Google Sheet Web App URL</label><input name="sheetWebAppUrl" placeholder="https://script.google.com/macros/s/XXXXX/exec"></div>
+            <div class="full"><button class="btn btn-primary" type="submit">💾 Save Sheet URL</button></div>
+          </form>
+        </div>
+        <div class="panel" id="admin-login-panel"></div>
+        <div class="panel">
+          <h2>⚠️ Reset Website Data</h2>
+          <p style="font-size:0.82rem;color:var(--gray);margin-bottom:12px">Sab kuch default demo data par wapas le jayega (enquiries aur teacher applications bhi delete ho jayengi).</p>
+          <button class="btn btn-danger" id="reset-data-btn">🗑️ Reset All Data</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal for add/edit forms -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal">
+      <button class="modal-close" id="modal-close">&times;</button>
+      <h3 id="modal-title"></h3>
+      <form id="modal-form"></form>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="../js/admin.js"></script>
+</body>
+</html>
